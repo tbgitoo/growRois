@@ -25,9 +25,16 @@ import java.awt.Rectangle;
 
 import javax.swing.JScrollPane;
 
-
+/** 
+ * Class with static utility functions for handling Rois and also accessing imageJ's roiManager
+ * @author Thomas Braschler, Zahra Sadat Ghazali
+ *
+ */
 public class RoiLogics {
 
+	/** 
+	 * Reference to ImageJ's roiManager
+	 */
 	public static RoiManager roiManager=null;
 
 	/**
@@ -684,8 +691,8 @@ public class RoiLogics {
 	/**
 	 * Translate a ROI by delta x and delta y
 	 * @param theRoi The region of interest
-	 * @param deltaX The delta in X position
-	 * @param deltaY the delta in Y position
+	 * @param deltax The delta in X position
+	 * @param deltay the delta in Y position
     */
 
 	public static void translateRoi(Roi theRoi,int deltax, int deltay)
@@ -705,7 +712,7 @@ public class RoiLogics {
 	 * 
 	 * @param num The integer number
 	 * @param digits Minimum number of digits (for leading zeroes)
-	 * @return
+	 * @return string formatted number
 	 */
 
 	public static String intToString(int num, int digits)
@@ -719,7 +726,7 @@ public class RoiLogics {
 	 * 
 	 * @param num The integer number
 	 * @param maximum Highest number to be shown, to define the number of necessary leading zeroes
-	 * @return
+	 * @return string-formatted number
 	 */
 	
 	public static String intWithLeadingZeroes(int num, int maximum)
@@ -732,7 +739,7 @@ public class RoiLogics {
 	 * 
 	 * @param theRoi The ROI to be trimmed to the mask area
 	 * @param ip The image processor holding the mask
-	 * @return
+	 * @return the trimmed ROI
 	 */
 
 	public static Roi restrictRoiToMask(Roi theRoi,ImageProcessor ip)

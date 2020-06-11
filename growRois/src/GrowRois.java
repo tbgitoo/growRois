@@ -17,27 +17,50 @@ import javax.swing.JScrollPane;
 import javax.swing.border.LineBorder;
 
 
+/** 
+ * This ImageJ plugin allows to grow (dilate) ROIs (regions of interest)
+ * simultaneousy, optionally with additional control options 
+ * Namely, avoiding overlap between neighboring ROIs and restricting the growth area to a preset mask
+ * The primary intended use is cell segmentation by using the nuclei as the starting point; in this case, 
+ * pancytoplasmic marking allows to delimit the cells, while avoid overlap leads to a modified watershed that
+ * centers the cells on the nuclei. 
+ * @author Thomas Braschler, Zahra Sadat Ghazali
+ *
+ */
 public class GrowRois implements PlugInFilter {
 
+	/** Reference to ImageJ's roiManager */
 	
 	protected RoiManager roiManager;
 
+	/** Current image */
 	protected ImagePlus imp;
-
+	
+    /** Current image processor */
 	protected ImageProcessor ip;
-
+    
+	/** Optional mask specifying the accessible pixels for ROI dilatation */
 	public ImagePlus allowedPixelMask=null;
 
+	/** Title of the optional mask */
 	public static String allowedMaskTitle=null;
 
+	/** Flag indicating whether neighboring ROIs are allowed to overlap */
 	public static boolean overlapAllowed=false;
 
+	/** Total number of pixels by which the dilatation should be done */
 	public static int nPixels=1;
-
-	Roi[] theRois;
-
+    
+	/** Array of the ROIs to be grown */
+	public Roi[] theRois;
+    
+	/** Did the user push the cancel button in the options dialog */
 	protected static boolean iscanceled = false;
 
+	/** 
+	 * Main function called by imageJ to have the plugin run 
+	 * @param ip Imageprocessor provided by ImageJ
+	 * */
 	public void run(ImageProcessor ip) {
 
 		
@@ -158,7 +181,11 @@ public class GrowRois implements PlugInFilter {
 
 
 
-
+    /**
+     * This function gathers the IDs of the open images. This is to offer the user the choice among the
+     * open images as dilatation masks
+     * @return Array of open image IDs
+     */
 	public int[] getImageIDList()
 	{
 		int[] wList = WindowManager.getIDList();
@@ -188,6 +215,9 @@ public class GrowRois implements PlugInFilter {
 		return ret;
 
 	}
+	/**
+	 * Run the options dialog
+	 */
 
 	public void runDialog()
 	{
@@ -238,13 +268,19 @@ public class GrowRois implements PlugInFilter {
 
 
 	}
+	
+	/** 
+	 * Get a reference to ImageJ's roiManager, if not present initiate
+	 */
 
 	public void initiateRoiManager()
 	{
 		roiManager=RoiLogics.getRoiManager();
 	}
-
-
+	
+	/** 
+	 * Debugging function, initiate some ROI for testing purposes 
+	 * */
 
 	public void checkRois()
 	{
@@ -261,7 +297,9 @@ public class GrowRois implements PlugInFilter {
 
 
 
-
+	/**
+	 * Setup function used by ImageJ to know the basic properties of the plugin
+	 */
 
 	public int setup(String arg, ImagePlus imp) {
 		this.imp = imp;
