@@ -13,7 +13,7 @@ import ij.process.ImageProcessor;
 import java.awt.Polygon;
 
 
-public class growRois_ implements PlugInFilter {
+public class GrowRois implements PlugInFilter {
 
 	
 	protected RoiManager roiManager;
@@ -187,7 +187,7 @@ public class growRois_ implements PlugInFilter {
 			titles[i+1]=WindowManager.getImage(wList[i]).getTitle();
 		}
 
-		IJ.register(growRois_.class);
+		IJ.register(GrowRois.class);
 
 
 		GenericDialog gd = new GenericDialog("Image Calculator", IJ.getInstance());
