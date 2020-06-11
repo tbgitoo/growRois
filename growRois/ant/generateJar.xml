@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="growRois" default="generate-jar" basedir="/">
+
+
+<target name = "generate-jar">
+<jar destfile = "../bin/jars/growRois_.jar"
+   basedir = "../bin"
+   includes = "growRois/**,*.class">
+	<fileset dir="../config"/> 
+    </jar>
+</target>
+
+</project>
