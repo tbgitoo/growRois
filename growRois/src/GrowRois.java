@@ -10,7 +10,11 @@ import ij.plugin.filter.PlugInFilter;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 
+import java.awt.Color;
 import java.awt.Polygon;
+
+import javax.swing.JScrollPane;
+import javax.swing.border.LineBorder;
 
 
 public class GrowRois implements PlugInFilter {
@@ -36,11 +40,27 @@ public class GrowRois implements PlugInFilter {
 
 	public void run(ImageProcessor ip) {
 
+		
+		
 		iscanceled = false;
 
 		this.ip = ip;
+		
+		roiManager=RoiLogics.getRoiManager();
 
-		checkRois();
+		if(RoiLogics.getCount()==0)
+		{
+			RoiLogics.addSelection(imp);
+		}
+		
+		if(RoiLogics.getCount()==0)
+		{
+			IJ.error("growRois: At least one ROI must be available in the ROI manager \n"
+					+ "(Analyze > Tools > ROI Manager)");
+			return;
+		}
+		
+		
 
 		runDialog();
 
@@ -49,11 +69,7 @@ public class GrowRois implements PlugInFilter {
 			return;
 		}	
 
-		if(roiManager.getRoisAsArray().length==0)
-		{
-			IJ.error("growRois: At least one ROI must be available in the ROI manager");
-			return;
-		}
+		
 		
 		Roi[] theRois = roiManager.getRoisAsArray();
 		
@@ -129,8 +145,8 @@ public class GrowRois implements PlugInFilter {
 				RoiLogics.renameLabelInRoiManager(index,labels[index]);
 			}
 		}
-		
-		
+		// Bug with RoiManager, sometimes the ROIs become invisible. Hopefully this helps
+		RoiLogics.redrawScrollPane();
 
 
 	}
