@@ -3,7 +3,7 @@
 
 
 <target name = "generate-jar">
-<jar destfile = "../download/growRois_.jar"
+<jar destfile = "../download/growRois.jar"
    basedir = "../bin"
    includes = "growRois/**,*.class">
 	<fileset dir="../config"/> 
