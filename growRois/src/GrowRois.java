@@ -173,6 +173,9 @@ public class GrowRois implements PlugInFilter {
 		}
 		// Bug with RoiManager, sometimes the ROIs become invisible. Hopefully this helps
 		RoiLogics.redrawScrollPane();
+		
+		// To show the ROIs
+		roiManager.runCommand("show all");
 
 
 	}
@@ -239,7 +242,7 @@ public class GrowRois implements PlugInFilter {
 		IJ.register(GrowRois.class);
 
 
-		GenericDialog gd = new GenericDialog("Image Calculator", IJ.getInstance());
+		GenericDialog gd = new GenericDialog("growRois ROI dilatation plugin", IJ.getInstance());
 		String defaultImageTitle=null;
 		if(allowedMaskTitle!=null)
 		{
