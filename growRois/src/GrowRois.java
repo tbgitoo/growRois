@@ -159,7 +159,7 @@ public class GrowRois implements PlugInFilter {
 		}
 		
 		// This is a bit of fiddling, but it is convenient to have the old names back
-		bp.show(1);
+		bp.show(0);
 		for(int index=0; index<pols.length; index++)
 		{
 			if(!labels[index].startsWith("GR_"))
