@@ -138,7 +138,9 @@ public class GrowRois implements PlugInFilter {
 		RoiLogics.growPolygons(pols, allowedProcessor, !overlapAllowed, nPixels, bp);
 		
 		
-		
+		// At present, this seems to be a difficult problem: Changing a given
+		// ROI in the roiManager does not seem easy by programmatic access
+		// instead, we delete the whole list and add everything new
 
 		roiManager.runCommand("deselect");
 		roiManager.runCommand("delete");
@@ -155,7 +157,8 @@ public class GrowRois implements PlugInFilter {
 
 
 		}
-
+		
+		// This is a bit of fiddling, but it is convenient to have the old names back
 		bp.show(1);
 		for(int index=0; index<pols.length; index++)
 		{
