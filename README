@@ -20,3 +20,5 @@ seeds (available in Fiji through Plugins > Segmentation > Balloon ): regions of 
 region-by-region by dilation of 1 pixel. The results are similar, but not identical to seeded watershedding. The difference is the order of 
 pixel assignment (region-by-region vs. systematically through the pixels in watershedding), and tends to limit simultaneous access of 
 different growing regions in narrow parts of the image.
+
+A more detailed description and instructions are available in the user manual.
