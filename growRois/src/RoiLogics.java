@@ -421,6 +421,67 @@ public class RoiLogics {
 
 		}
 	}
+	
+	/**
+	 * Grow polygons with progressive enlargements of the mask from watershedding
+	 * @param pols An array of polygons
+	 * @param allowedProcessor The image Processor to use
+	 * @param avoidNeighbors Does a growing polygon have to avoid geometric neighbors during growth?
+	 * @param nSteps How many pixels to for each watershed level
+	 * @param watershedProcessor Greyscale image containg the watershed guid, first fill low values, then higher
+	 * @param bp Reference to progress bar to show progress
+	 */
+	
+	public static void growPolygonsWatershed(Polygon[] pols, ImageProcessor allowedProcessor, boolean avoidNeighbors, int nSteps, ImageProcessor watershedProcessor, ProgressBar bp)
+	{
+		if(watershedProcessor==null)
+		{
+			growPolygons(pols, allowedProcessor, avoidNeighbors, nSteps, bp);
+			return;
+		}
+		ByteProcessor w=null;
+		if(!(watershedProcessor instanceof ByteProcessor))
+		{
+			w=watershedProcessor.convertToByteProcessor(true);
+		} else
+		{
+			w=(ByteProcessor)watershedProcessor;
+		}
+		
+		int lower=(int)Math.floor(w.getMin());
+		int upper=(int)Math.floor(w.getMax());
+		
+		for(int theLevel=lower; theLevel<=upper; theLevel++)
+		{
+			ByteProcessor thresholdMask=maskFromThreshold(w,theLevel);
+			thresholdMask.invert();
+			if(allowedProcessor!=null)
+			{
+				thresholdMask.copyBits(allowedProcessor, 0, 0, Blitter.AND);
+				drawPolygonArrayToMask(pols, thresholdMask, getWhiteColor());
+			}
+			
+			growPolygons(pols, thresholdMask, avoidNeighbors, nSteps, null);
+			boolean showProgress = (bp!=null);	
+
+			if(showProgress)
+			{
+				bp.show(theLevel-lower,upper-lower);
+			}
+		}
+			
+		
+		
+	}
+	
+	public static ByteProcessor maskFromThreshold(ImageProcessor ip, int threshold)
+	{
+		ByteProcessor bp=ip.convertToByteProcessor(false);
+		bp.threshold(threshold);
+		
+		return(bp);
+		
+	}
 
 	/**
 	 * Convert a polygon to a binary mask in rectangular image (white pixels on black background)
