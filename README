@@ -12,13 +12,15 @@ with ImageJ's "Analyze > Analyze Particles..." command.
 Once the collection of ROIs established, the plugin can be launched for growing the ROIs by a given amount of pixels, with or without 
 overlap with neighboring ROIS.
 
-Additionally, a mask can be used to limit the growth of the ROIs. For this, the mask (accessible pixels 255, background 0) needs to be loaded
-before the plugin is launched.
+There are some additional options. First, a binary mask can be used to limit the growth of the ROIs. For this, the mask 
+(accessible pixels 255, background 0) needs to be loaded before the plugin is launched and selected in the dialog. Second, an additional
+greyscale image can be used for watershedding. In this case, the extension of the ROIs follows a watershedding algorithm, with expansion
+first in the darkest regions with lowest numerical value and then progressively brighter regions of the greyscale guide image.
 
 The inner workings of the plugin are somewhere between watershed (as extensively implemented in MorpholibJ) and ballooning of preselected 
 seeds (available in Fiji through Plugins > Segmentation > Balloon ): regions of interest are determined as polygonal regions, but are grown 
 region-by-region by dilation of 1 pixel. The results are similar, but not identical to seeded watershedding. The difference is the order of 
-pixel assignment (region-by-region vs. systematically through the pixels in watershedding), and tends to limit simultaneous access of 
-different growing regions in narrow parts of the image.
+pixel assignment (region-by-region vs. systematically through the pixels in watershedding). This avoids preferential orientation artifacts 
+that one sometimes sees in pixel-based watershedding (see "User guide growRois Plugin.pdf" for details).
 
 A more detailed description and instructions are available in the user manual. ("User guide growRois Plugin.pdf")
