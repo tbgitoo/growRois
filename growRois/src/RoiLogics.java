@@ -299,24 +299,25 @@ public class RoiLogics {
 
 		Rectangle r=pol.getBounds();
 		Polygon polCopy = clonePolygon(pol);
-		polCopy.translate(-r.x+1, -r.y+1);
+		polCopy.translate(-r.x+2, -r.y+2);
 
 		Polygon[] polygons_to_avoid_copy=clonePolygonArray(polygons_to_avoid);
 
-		translatePolygonArray(polygons_to_avoid_copy,-r.x+1,-r.y+1);
+		translatePolygonArray(polygons_to_avoid_copy,-r.x+2,-r.y+2);
 
 
 
 		// Use the polygon coordinates to create an image where the pixels inside the polygon are white, the other ones black
-		ByteProcessor thePolygonMask = maskFromPolygon(polCopy,r.width+2,r.height+2);
-		ByteProcessor allowedMask=new ByteProcessor(r.width+2, r.height+2);
+		ByteProcessor thePolygonMask = maskFromPolygon(polCopy,r.width+4,r.height+4);
+		ByteProcessor thePolygonMask_Old = maskFromPolygon(polCopy,r.width+4,r.height+4);
+		ByteProcessor allowedMask=new ByteProcessor(r.width+4, r.height+4);
 
 		if(maskAllowedPixels!=null)
 		{
 
 
 
-			allowedMask.copyBits(maskAllowedPixels, -r.x+1, -r.y+1, Blitter.COPY);
+			allowedMask.copyBits(maskAllowedPixels, -r.x+2, -r.y+2, Blitter.COPY);
 
 
 
@@ -335,7 +336,7 @@ public class RoiLogics {
 		ByteProcessor otherPols = null;
 		if(polygons_to_avoid_copy != null)
 		{
-			otherPols = new ByteProcessor(r.width+2, r.height+2);	
+			otherPols = new ByteProcessor(r.width+4, r.height+4);	
 			otherPols.setColor(RoiLogics.getWhiteColor());
 			otherPols.fill();
 			drawPolygonArrayToMask(polygons_to_avoid_copy,otherPols,RoiLogics.getBlackColor());
@@ -359,20 +360,57 @@ public class RoiLogics {
 
 
 		}
+		
+		thePolygonMask.copyBits(thePolygonMask_Old, 0, 0, Blitter.OR);
+		
+		
+		fillHoles(thePolygonMask);
+		
 
 
-
+		int[] starting_point_old = getStartingPointBright(thePolygonMask_Old);
+		
 
 
 		// Reconstitute a polygon from the mask
-		Polygon retPol = polygonFromMask(thePolygonMask);
-
+		Polygon retPol = polygonFromMask(thePolygonMask,starting_point_old[0],starting_point_old[1]);
+		
+		
 		// Now, we can shift the polygon back to where it belongs
-		retPol.translate(r.x-1, r.y-1);
+		retPol.translate(r.x-2, r.y-2);
 
 		return retPol;
 
 	}
+	
+	// Binary fill by Gabriel Landini, G.Landini at bham.ac.uk
+    // 21/May/2008. Copied from ImageJ's Binary class, method fill
+    public static void fillHoles(ImageProcessor ip) {
+        
+    	int foreground=255;
+    	int background=0;
+    	
+    	int width = ip.getWidth();
+        int height = ip.getHeight();
+        FloodFiller ff = new FloodFiller(ip);
+        ip.setColor(127);
+        for (int y=0; y<height; y++) {
+            if (ip.getPixel(0,y)==background) ff.fill(0, y);
+            if (ip.getPixel(width-1,y)==background) ff.fill(width-1, y);
+        }
+        for (int x=0; x<width; x++){
+            if (ip.getPixel(x,0)==background) ff.fill(x, 0);
+            if (ip.getPixel(x,height-1)==background) ff.fill(x, height-1);
+        }
+        byte[] pixels = (byte[])ip.getPixels();
+        int n = width*height;
+        for (int i=0; i<n; i++) {
+        if (pixels[i]==127)
+            pixels[i] = (byte)background;
+        else
+            pixels[i] = (byte)foreground;
+        }
+    }
 	
 	/**
 	 * Grow polygons
@@ -455,6 +493,7 @@ public class RoiLogics {
 		{
 			ByteProcessor thresholdMask=maskFromThreshold(w,theLevel);
 			thresholdMask.invert();
+			
 			if(allowedProcessor!=null)
 			{
 				thresholdMask.copyBits(allowedProcessor, 0, 0, Blitter.AND);
@@ -462,6 +501,21 @@ public class RoiLogics {
 			}
 			
 			growPolygons(pols, thresholdMask, avoidNeighbors, nSteps, null);
+			
+			if(theLevel>=200 & theLevel % 10==0)
+			{
+				ByteProcessor theBP=new ByteProcessor(thresholdMask.getWidth(),thresholdMask.getHeight());
+				for(int ind_pol=0; ind_pol<pols.length; ind_pol++)
+				{
+					drawPolygonToMask(pols[ind_pol], theBP, new Color(ind_pol*8,ind_pol*8,ind_pol*8));
+				}
+				
+				new ImagePlus("test",theBP).show();
+				IJ.error("test"+theLevel);
+			}
+			
+			
+			
 			boolean showProgress = (bp!=null);	
 
 			if(showProgress)
@@ -506,14 +560,16 @@ public class RoiLogics {
 		return theMask;
 
 	}
-
+	
 	/**
-	 * Convert a binary mask to a polygon
+	 * Convert a binary mask to a polygon, with a known starting point
 	 * @param theMask ByteProcessor containing the mask (white pixels = selected)
+	 * @param xstart Starting point (needs to be bright)
+	 * @param ystart Starting point (needs to be bright)
 	 * @return Polygon obtained from the mask
 	  */
 
-	public static Polygon polygonFromMask(ByteProcessor theMask)
+	public static Polygon polygonFromMask(ByteProcessor theMask, int xstart, int ystart)
 	{
 		// We need a black rim, the algorithm does not necessarily work if the pixels touch borders
 
@@ -522,54 +578,10 @@ public class RoiLogics {
 		Wand thewand = new Wand(theMask);
 		Wand.setAllPoints(true);
 
-		// We need to find a starting point, let's try to find a white one near the center of gravity
-
-		double cgx=0;
-		double cgy=0;
-		double cgn=0;
 		boolean found=false;
-		for(int xs=0; xs<theMask.getWidth(); xs++)
+		if(theMask.getPixel(xstart, ystart)>128)
 		{
-			for(int ys=0; ys<theMask.getHeight(); ys++)
-			{
-				if((theMask.getPixel(xs, ys)>128))
-				{
-					found=true;
-					cgx=cgx+xs;
-					cgy=cgy+ys;
-					cgn++;
-				}
-			}
-		}
-
-		if(!found)
-		{
-			return null;
-		}
-
-
-		cgx=cgx/cgn;
-		cgy=cgy/cgn;
-
-
-
-		double dsquared=2*(theMask.getWidth()*theMask.getWidth()+theMask.getHeight()*theMask.getHeight());
-
-		found=false;
-		int xstart=-1;
-		int ystart=-1;
-		for(int xs=0; xs<theMask.getWidth(); xs++)
-		{
-			for(int ys=0; ys<theMask.getHeight(); ys++)
-			{
-				if((theMask.getPixel(xs, ys)>128) & ((xs-cgx)*(xs-cgx)+(ys-cgy)*(ys-cgy)<dsquared))
-				{
-					found=true;
-					xstart=xs;
-					ystart=ys;
-					dsquared = (xs-cgx)*(xs-cgx)+(ys-cgy)*(ys-cgy);
-				}
-			}
+			found=true;
 		}
 
 		if(!found)
@@ -597,6 +609,101 @@ public class RoiLogics {
 
 
 		return(retPol);
+
+	}
+	
+	public static int[] getStartingPointBright(ByteProcessor theMask)
+	{
+		// We need to find a starting point, let's try to find a white one near the center of gravity
+
+				double cgx=0;
+				double cgy=0;
+				double cgn=0;
+				boolean found=false;
+				for(int xs=0; xs<theMask.getWidth(); xs++)
+				{
+					for(int ys=0; ys<theMask.getHeight(); ys++)
+					{
+						if((theMask.getPixel(xs, ys)>128))
+						{
+							found=true;
+							cgx=cgx+xs;
+							cgy=cgy+ys;
+							cgn++;
+						}
+					}
+				}
+
+				if(!found)
+				{
+					return null;
+				}
+
+
+				cgx=cgx/cgn;
+				cgy=cgy/cgn;
+
+
+
+				double dsquared=2*(theMask.getWidth()*theMask.getWidth()+theMask.getHeight()*theMask.getHeight());
+
+				found=false;
+				int xstart=-1;
+				int ystart=-1;
+				for(int xs=0; xs<theMask.getWidth(); xs++)
+				{
+					for(int ys=0; ys<theMask.getHeight(); ys++)
+					{
+						if((theMask.getPixel(xs, ys)>128) & ((xs-cgx)*(xs-cgx)+(ys-cgy)*(ys-cgy)<dsquared))
+						{
+							found=true;
+							xstart=xs;
+							ystart=ys;
+							dsquared = (xs-cgx)*(xs-cgx)+(ys-cgy)*(ys-cgy);
+						}
+					}
+				}
+
+				if(!found)
+				{
+					return null;
+				}
+				int[] ret=new int[2];
+				ret[0]=xstart;
+				ret[1]=ystart;
+				return ret;
+	}
+	
+	
+
+	/**
+	 * Convert a binary mask to a polygon
+	 * @param theMask ByteProcessor containing the mask (white pixels = selected)
+	 * @return Polygon obtained from the mask
+	  */
+
+	public static Polygon polygonFromMask(ByteProcessor theMask)
+	{
+		// We need a black rim, the algorithm does not necessarily work if the pixels touch borders
+
+
+
+		
+		
+		int[] s=getStartingPointBright(theMask);
+		
+		if(s==null)
+		{
+			return null;
+		}
+
+
+
+		return polygonFromMask(theMask,s[0],s[1]);
+
+
+
+		
 
 	}
 	
