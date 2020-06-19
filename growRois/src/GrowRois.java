@@ -41,9 +41,15 @@ public class GrowRois implements PlugInFilter {
     
 	/** Optional mask specifying the accessible pixels for ROI dilatation */
 	public ImagePlus allowedPixelMask=null;
+	
+	/** Optional greyscale image for watershed guidance to take into account local structure */
+	public ImagePlus watershedGuide=null;
 
 	/** Title of the optional mask */
 	public static String allowedMaskTitle=null;
+	
+	/** Title of the optional watershed guide */
+	public static String watershedGuideTitle=null;
 
 	/** Flag indicating whether neighboring ROIs are allowed to overlap */
 	public static boolean overlapAllowed=false;
@@ -129,13 +135,24 @@ public class GrowRois implements PlugInFilter {
 		{
 			allowedProcessor = allowedPixelMask.getProcessor();
 		}
+		
+		ImageProcessor guideProcessor = null;
+		if(watershedGuide!=null)
+		{
+			guideProcessor = watershedGuide.getProcessor();
+		}
 
 		ProgressBar bp = new ProgressBar(0, 0);
 		ip.setProgressBar(bp);
 
 		
-
-		RoiLogics.growPolygons(pols, allowedProcessor, !overlapAllowed, nPixels, bp);
+		if(guideProcessor==null)
+		{
+			RoiLogics.growPolygons(pols, allowedProcessor, !overlapAllowed, nPixels, bp);
+		} else
+		{
+			RoiLogics.growPolygonsWatershed(pols, allowedProcessor, !overlapAllowed, nPixels, guideProcessor, bp);
+		}
 		
 		
 		// At present, this seems to be a difficult problem: Changing a given
@@ -252,7 +269,18 @@ public class GrowRois implements PlugInFilter {
 		{
 			defaultImageTitle=titles[0];
 		}
+		
+		String defaultGuideTitle=null;
+		if(watershedGuideTitle!=null)
+		{
+			defaultGuideTitle=watershedGuideTitle;
+		}
+		else
+		{
+			defaultGuideTitle=titles[0];
+		}
 		gd.addChoice("Image with allowed pixels:", titles,defaultImageTitle);
+		gd.addChoice("Image for watershed guiding:", titles,defaultGuideTitle);
 		gd.addCheckbox("Allow overlap between ROIs", overlapAllowed);
 		gd.addNumericField("Pixels to grow", nPixels, 0);
 		gd.showDialog();
@@ -266,6 +294,12 @@ public class GrowRois implements PlugInFilter {
 		if(index1>0)
 		{
 			allowedPixelMask=WindowManager.getImage(wListWithNone[index1]);
+		}
+		int index2 = gd.getNextChoiceIndex();
+		watershedGuideTitle = titles[index2];
+		if(index2>0)
+		{
+			watershedGuide=WindowManager.getImage(wListWithNone[index2]);
 		}
 		overlapAllowed = gd.getNextBoolean();
 
