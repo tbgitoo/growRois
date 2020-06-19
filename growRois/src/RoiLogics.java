@@ -502,17 +502,7 @@ public class RoiLogics {
 			
 			growPolygons(pols, thresholdMask, avoidNeighbors, nSteps, null);
 			
-			if(theLevel>=200 & theLevel % 10==0)
-			{
-				ByteProcessor theBP=new ByteProcessor(thresholdMask.getWidth(),thresholdMask.getHeight());
-				for(int ind_pol=0; ind_pol<pols.length; ind_pol++)
-				{
-					drawPolygonToMask(pols[ind_pol], theBP, new Color(ind_pol*8,ind_pol*8,ind_pol*8));
-				}
-				
-				new ImagePlus("test",theBP).show();
-				IJ.error("test"+theLevel);
-			}
+			
 			
 			
 			
