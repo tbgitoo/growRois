@@ -347,4 +347,3 @@ public class GrowRois implements PlugInFilter {
 	}
 
 }
-
